@@ -1,8 +1,8 @@
 {
   "name": "vscode-script-panel",
-  "displayName": "vscode-script-panel",
-  "description": "A VSCode extension that adds a panel dedicated to running your most often used commands in a simpler way.",
-  "version": "0.1.0",
+  "displayName": "Projekt-Skriptbefehle (Script Panel)",
+  "description": "Fügt im Explorer-Sidepanel einen aufklappbaren Bereich hinzu, der alle im Projekt definierten Skriptbefehle automatisch aus Konfigurationsdateien ausliest und per Klick ausführt.",
+  "version": "0.2.0",
   "publisher": "daniel-rösch",
   "author": "Daniel Rösch <daniel.roesch91@gmail.com>",
   "license": "MIT",
@@ -17,37 +17,185 @@
   "contributes": {
     "commands": [
       {
-        "command": "vscode-script-panel.helloWorld",
-        "title": "vscode-script-panel: Hallo Welt anzeigen"
+        "command": "vscode-script-panel.runScript",
+        "title": "Skript ausführen",
+        "category": "Skriptbefehle",
+        "icon": "$(play)"
+      },
+      {
+        "command": "vscode-script-panel.openConfigFile",
+        "title": "In Konfigurationsdatei öffnen",
+        "category": "Skriptbefehle",
+        "icon": "$(go-to-file)"
       },
       {
         "command": "vscode-script-panel.refreshTree",
-        "title": "vscode-script-panel: Ansicht aktualisieren"
+        "title": "Skriptbefehle aktualisieren",
+        "category": "Skriptbefehle",
+        "icon": "$(refresh)"
       }
     ],
     "views": {
       "explorer": [
         {
           "id": "vscode-script-panel.treeView",
-          "name": "vscode-script-panel"
+          "name": "Skriptbefehle"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "vscode-script-panel.refreshTree",
+          "when": "view == vscode-script-panel.treeView",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "vscode-script-panel.runScript",
+          "when": "view == vscode-script-panel.treeView && viewItem =~ /^scriptItem/",
+          "group": "inline@1"
+        },
+        {
+          "command": "vscode-script-panel.openConfigFile",
+          "when": "view == vscode-script-panel.treeView && viewItem =~ /WithFile$/",
+          "group": "inline@2"
+        },
+        {
+          "command": "vscode-script-panel.runScript",
+          "when": "view == vscode-script-panel.treeView && viewItem =~ /^scriptItem/",
+          "group": "1_execution@1"
+        },
+        {
+          "command": "vscode-script-panel.openConfigFile",
+          "when": "view == vscode-script-panel.treeView && viewItem =~ /WithFile$/",
+          "group": "2_navigation@1"
         }
       ]
     },
     "configuration": {
-      "title": "vscode-script-panel",
+      "title": "Skriptbefehle (vscode-script-panel)",
       "properties": {
-        "vscode-script-panel.greeting": {
+        "vscode-script-panel.maxScanDepth": {
+          "type": "number",
+          "default": 4,
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Maximale Verzeichnistiefe bei der rekursiven Suche nach Projekt-Konfigurationsdateien im Workspace (0 = nur Hauptverzeichnis)."
+        },
+        "vscode-script-panel.excludeFolders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "node_modules",
+            ".git",
+            ".venv",
+            "venv",
+            "env",
+            "__pycache__",
+            "target",
+            "dist",
+            "out",
+            "build",
+            ".gradle",
+            ".next",
+            ".nuxt",
+            "coverage",
+            ".vscode-test"
+          ],
+          "description": "Ordnernamen, die beim Durchsuchen des Projekts nach Konfigurationsdateien ignoriert werden."
+        },
+        "vscode-script-panel.defaultNodeRunner": {
           "type": "string",
-          "default": "Hallo aus vscode-script-panel!",
-          "description": "Begrüßungstext, der beim Ausführen des Befehls angezeigt wird."
+          "enum": [
+            "npm",
+            "pnpm",
+            "yarn",
+            "bun"
+          ],
+          "default": "npm",
+          "description": "Standard-Paketmanager für package.json-Skripte, falls kein Lockfile und kein 'packageManager'-Feld gefunden wird."
+        },
+        "vscode-script-panel.defaultPythonRunner": {
+          "type": "string",
+          "enum": [
+            "poetry",
+            "pdm",
+            "uv",
+            "pipenv",
+            "hatch",
+            "python"
+          ],
+          "default": "python",
+          "description": "Standard-Runner für pyproject.toml-Skripte, falls kein Lockfile (poetry.lock, pdm.lock, uv.lock, Pipfile.lock) gefunden wird."
+        },
+        "vscode-script-panel.customScripts": {
+          "type": "array",
+          "default": [],
+          "description": "Eigene benutzerdefinierte Skriptbefehle, die zusätzlich im Skript-Panel angezeigt werden.",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "command"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Anzeigename des Befehls im Panel."
+              },
+              "command": {
+                "type": "string",
+                "description": "Auszuführender Terminal-Befehl."
+              },
+              "cwd": {
+                "type": "string",
+                "description": "Optionales Arbeitsverzeichnis (relativ zum Workspace-Root oder absolut)."
+              },
+              "description": {
+                "type": "string",
+                "description": "Optionale Kurzbeschreibung des Befehls."
+              }
+            }
+          }
+        },
+        "vscode-script-panel.customConfigFiles": {
+          "type": "array",
+          "default": [],
+          "description": "Eigene JSON-Konfigurationsdateien (z.B. composer.json), aus denen Skripte automatisch ausgelesen werden sollen.",
+          "items": {
+            "type": "object",
+            "required": [
+              "fileName",
+              "runnerCommand"
+            ],
+            "properties": {
+              "fileName": {
+                "type": "string",
+                "description": "Dateiname der Konfigurationsdatei (z.B. 'composer.json')."
+              },
+              "jsonScriptsKey": {
+                "type": "string",
+                "default": "scripts",
+                "description": "JSON-Schlüsselpfad zum Skript-Objekt (Standard: 'scripts')."
+              },
+              "runnerCommand": {
+                "type": "string",
+                "description": "Befehls-Präfix zum Ausführen eines Skripts (z.B. 'composer run')."
+              }
+            }
+          }
         }
       }
     }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "node esbuild.mjs",
-    "watch": "node esbuild.mjs --watch",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
     "package": "npx @vscode/vsce package",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
