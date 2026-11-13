@@ -3,7 +3,7 @@
   "displayName": "Projekt-Skriptbefehle (Script Panel)",
   "description": "Fügt im Explorer-Sidepanel einen aufklappbaren Bereich hinzu, der alle im Projekt definierten Skriptbefehle automatisch aus Konfigurationsdateien ausliest und per Klick ausführt.",
   "version": "0.2.0",
-  "publisher": "daniel-rösch",
+  "publisher": "daniel-roesch",
   "author": "Daniel Rösch <daniel.roesch91@gmail.com>",
   "license": "MIT",
   "engines": {
@@ -38,6 +38,7 @@
     "views": {
       "explorer": [
         {
+          "icon": "",
           "id": "vscode-script-panel.treeView",
           "name": "Skriptbefehle"
         }
