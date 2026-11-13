@@ -2,10 +2,13 @@
   "name": "vscode-script-panel",
   "displayName": "Projekt-Skriptbefehle (Script Panel)",
   "description": "Fügt im Explorer-Sidepanel einen aufklappbaren Bereich hinzu, der alle im Projekt definierten Skriptbefehle automatisch aus Konfigurationsdateien ausliest und per Klick ausführt.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "daniel-roesch",
   "author": "Daniel Rösch <daniel.roesch91@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "url": "https://github.com/TGBox/vscode-script-panel"
+  },
   "engines": {
     "vscode": "^1.90.0"
   },
